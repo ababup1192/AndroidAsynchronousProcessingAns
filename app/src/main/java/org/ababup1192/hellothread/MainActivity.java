@@ -9,8 +9,13 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.TextView;
 
-// Workerの結果型であるIntegerをジェネリクスに指定。
-public class MainActivity extends FragmentActivity implements View.OnClickListener, LoaderManager.LoaderCallbacks<Integer> {
+import org.json.JSONException;
+import org.json.JSONObject;
+
+import java.net.MalformedURLException;
+
+// Workerの結果型であるStringをジェネリクスに指定。
+public class MainActivity extends FragmentActivity implements View.OnClickListener, LoaderManager.LoaderCallbacks<String> {
     private TextView helloText;
 
     @Override
@@ -49,7 +54,7 @@ public class MainActivity extends FragmentActivity implements View.OnClickListen
     public void onClick(View v) {
         // ボタンがクリックされたらLoaderManagerがLoaderを初期化する。
         if (v.getId() == R.id.btn_start) {
-            helloText.setText("計算中です...");
+            helloText.setText("取得中です...");
             // 以前のTaskを削除する。(何度でも計算できるようにするため)
             getSupportLoaderManager().destroyLoader(0);
             getSupportLoaderManager().initLoader(0, null, this);
@@ -58,20 +63,41 @@ public class MainActivity extends FragmentActivity implements View.OnClickListen
 
     // Workerをインスタンス化し、タスクを始める(Load)。
     @Override
-    public Loader<Integer> onCreateLoader(int id, Bundle args) {
-        Loader<Integer> loader = new FactorialWorker(this, 10);
-        loader.forceLoad();
+    public Loader<String> onCreateLoader(int id, Bundle args) {
+        Loader<String> loader = null;
+        try {
+            // 日付取得APIにアクセスするタスクを開始。
+            loader = new HttpWorker(this, "http://date.jsontest.com");
+            loader.forceLoad();
+        } catch (MalformedURLException e) {
+            e.printStackTrace();
+        }
         return loader;
     }
 
     // Workerが計算結果を通知、それを反映。
     @Override
-    public void onLoadFinished(Loader<Integer> loader, Integer data) {
-        helloText.setText(data.toString());
+    public void onLoadFinished(Loader<String> loader, String data) {
+        String result;
+        try {
+            // Workerが空文字列を返した場合。
+            if (data.isEmpty()) {
+                result = "日付の取得に失敗しました。";
+            } else {
+                // JSONをパースして結果を取得。
+                JSONObject json = new JSONObject(data);
+                result = json.getString("date") + " " + json.getString("time");
+            }
+        } catch (JSONException e) {
+            // JSONのパースに失敗した場合のエラー処理。
+            result = "日付の取得に失敗しました";
+            e.printStackTrace();
+        }
+        helloText.setText(result);
     }
 
     @Override
-    public void onLoaderReset(Loader<Integer> loader) {
+    public void onLoaderReset(Loader<String> loader) {
 
     }
 }
