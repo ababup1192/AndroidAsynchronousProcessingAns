@@ -8,9 +8,9 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.TextView;
-import com.fasterxml.jackson.databind.ObjectMapper;
 
-import java.io.IOException;
+import org.json.JSONException;
+
 import java.net.MalformedURLException;
 
 // Workerの結果型であるStringをジェネリクスに指定。
@@ -65,8 +65,8 @@ public class MainActivity extends FragmentActivity implements View.OnClickListen
     public Loader<String> onCreateLoader(int id, Bundle args) {
         Loader<String> loader = null;
         try {
-            // 日付取得APIにアクセスするタスクを開始。
-            loader = new HttpWorker(this, "http://date.jsontest.com");
+            // 天気取得APIにアクセスするタスクを開始。
+            loader = new HttpWorker(this, "http://api.openweathermap.org/data/2.5/weather?q=AizuWakamatsu,jp");
             loader.forceLoad();
         } catch (MalformedURLException e) {
             e.printStackTrace();
@@ -81,15 +81,12 @@ public class MainActivity extends FragmentActivity implements View.OnClickListen
         try {
             // Workerが空文字列を返した場合。
             if (data.isEmpty()) {
-                result = "日付の取得に失敗しました。";
+                result = "天気の取得に失敗しました。";
             } else {
-                // JSONをパースして結果を取得。
-                ObjectMapper mapper = new ObjectMapper();
-                MyDate date = mapper.readValue(data, MyDate.class);
-                result = date.toString();
+                result = new Weather(data).toString();
             }
-        } catch (IOException e) {
-            result = "日付の取得に失敗しました。";
+        } catch (JSONException e) {
+            result = "天気の取得に失敗しました。";
             e.printStackTrace();
         }
         helloText.setText(result);
