@@ -8,10 +8,9 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.TextView;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
-import org.json.JSONException;
-import org.json.JSONObject;
-
+import java.io.IOException;
 import java.net.MalformedURLException;
 
 // Workerの結果型であるStringをジェネリクスに指定。
@@ -85,12 +84,12 @@ public class MainActivity extends FragmentActivity implements View.OnClickListen
                 result = "日付の取得に失敗しました。";
             } else {
                 // JSONをパースして結果を取得。
-                JSONObject json = new JSONObject(data);
-                result = json.getString("date") + " " + json.getString("time");
+                ObjectMapper mapper = new ObjectMapper();
+                MyDate date = mapper.readValue(data, MyDate.class);
+                result = date.toString();
             }
-        } catch (JSONException e) {
-            // JSONのパースに失敗した場合のエラー処理。
-            result = "日付の取得に失敗しました";
+        } catch (IOException e) {
+            result = "日付の取得に失敗しました。";
             e.printStackTrace();
         }
         helloText.setText(result);
