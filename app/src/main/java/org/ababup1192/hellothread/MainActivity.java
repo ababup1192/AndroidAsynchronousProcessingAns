@@ -8,10 +8,10 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.TextView;
-
-import org.json.JSONException;
-
+import com.fasterxml.jackson.databind.ObjectMapper;
+import java.io.IOException;
 import java.net.MalformedURLException;
+import org.ababup1192.hellothread.weather.WeatherInfo;
 
 // Workerの結果型であるStringをジェネリクスに指定。
 public class MainActivity extends FragmentActivity implements View.OnClickListener, LoaderManager.LoaderCallbacks<String> {
@@ -83,9 +83,12 @@ public class MainActivity extends FragmentActivity implements View.OnClickListen
             if (data.isEmpty()) {
                 result = "天気の取得に失敗しました。";
             } else {
-                result = new Weather(data).toString();
+                // JSONをパースして結果を取得。
+                ObjectMapper mapper = new ObjectMapper();
+                WeatherInfo weatherInfo = mapper.readValue(data, WeatherInfo.class);
+                result = weatherInfo.toString();
             }
-        } catch (JSONException e) {
+        } catch (IOException e) {
             result = "天気の取得に失敗しました。";
             e.printStackTrace();
         }
