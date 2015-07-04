@@ -50,6 +50,8 @@ public class MainActivity extends FragmentActivity implements View.OnClickListen
         // ボタンがクリックされたらLoaderManagerがLoaderを初期化する。
         if (v.getId() == R.id.btn_start) {
             helloText.setText("計算中です...");
+            // 以前のTaskを削除する。(何度でも計算できるようにするため)
+            getSupportLoaderManager().destroyLoader(0);
             getSupportLoaderManager().initLoader(0, null, this);
         }
     }
