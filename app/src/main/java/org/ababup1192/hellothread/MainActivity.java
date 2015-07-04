@@ -3,6 +3,7 @@ package org.ababup1192.hellothread;
 import android.app.Activity;
 import android.os.Bundle;
 import android.os.Handler;
+import android.os.Message;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.TextView;
@@ -17,9 +18,16 @@ public class MainActivity extends Activity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         helloText = (TextView) findViewById(R.id.text_hello);
-        handler = new Handler();
+        handler = new Handler() {
+            public void handleMessage(Message msg) {
+                // Handlerを使い別スレッドからメッセージを受け取り、結果をUIスレッドへ反映する。
+                if (msg.what == 1) {
+                    helloText.setText((String) msg.obj);
+                }
+            }
+        };
 
-        // 別スレッドで時間の掛かる計算をする。そして、その得られた結果をTextViewに反映する。
+        // 別スレッドで時間の掛かる計算をする。そして、その得られた結果をHandlerへ送る。
         new Thread(new Runnable() {
             @Override
             public void run() {
@@ -32,13 +40,9 @@ public class MainActivity extends Activity {
                 for (int i = 0; i < 1000; i++) {
                     count += i;
                 }
-                // Handlerを使い、得られた結果をUIスレッドへ反映する。
-                handler.post(new Runnable() {
-                    @Override
-                    public void run() {
-                        helloText.setText(String.valueOf(count));
-                    }
-                });
+                // 計算結果をHandlerへメッセージとして送る。
+                Message message = Message.obtain(handler, 1, String.valueOf(count));
+                handler.sendMessage(message);
             }
         }).start();
     }
