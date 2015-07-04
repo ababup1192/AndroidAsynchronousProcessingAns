@@ -1,6 +1,7 @@
 <resources>
     <string name="app_name">HelloThread</string>
 
-    <string name="process_message">計算中です…</string>
+    <string name="btn_text">計算開始</string>
+    <string name="process_message">ボタンを押して計算を開始してください。</string>
     <string name="action_settings">Settings</string>
 </resources>
