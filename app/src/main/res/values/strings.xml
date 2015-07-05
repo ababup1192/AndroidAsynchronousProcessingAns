@@ -2,6 +2,6 @@
     <string name="app_name">HelloThread</string>
 
     <string name="btn_text">取得開始</string>
-    <string name="process_message">ボタンを押して天気を取得してください。</string>
+    <string name="label_username">ユーザ名</string>
     <string name="action_settings">Settings</string>
 </resources>

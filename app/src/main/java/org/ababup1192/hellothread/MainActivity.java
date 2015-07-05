@@ -7,22 +7,26 @@ import android.support.v4.content.Loader;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
-import android.widget.TextView;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import java.io.IOException;
-import java.net.MalformedURLException;
-import org.ababup1192.hellothread.weather.WeatherInfo;
+import android.widget.EditText;
+import android.widget.ListView;
 
-// Workerの結果型であるStringをジェネリクスに指定。
-public class MainActivity extends FragmentActivity implements View.OnClickListener, LoaderManager.LoaderCallbacks<String> {
-    private TextView helloText;
+import org.ababup1192.hellothread.github.Repository;
+
+import java.util.List;
+
+// Workerの結果型であるList<Repository>をジェネリクスに指定。
+public class MainActivity extends FragmentActivity implements View.OnClickListener, LoaderManager.LoaderCallbacks<List<Repository>> {
+
+    private EditText usernameEdit;
+    private ListView listView;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        helloText = (TextView) findViewById(R.id.text_hello);
+        usernameEdit = (EditText) findViewById(R.id.edit_username);
+        listView = (ListView) findViewById(R.id.list_view);
         // ボタンのClickListenerに自身(MainActivity)を登録。
         findViewById(R.id.btn_start).setOnClickListener(this);
     }
@@ -53,7 +57,6 @@ public class MainActivity extends FragmentActivity implements View.OnClickListen
     public void onClick(View v) {
         // ボタンがクリックされたらLoaderManagerがLoaderを初期化する。
         if (v.getId() == R.id.btn_start) {
-            helloText.setText("取得中です...");
             // 以前のTaskを削除する。(何度でも計算できるようにするため)
             getSupportLoaderManager().destroyLoader(0);
             getSupportLoaderManager().initLoader(0, null, this);
@@ -62,41 +65,25 @@ public class MainActivity extends FragmentActivity implements View.OnClickListen
 
     // Workerをインスタンス化し、タスクを始める(Load)。
     @Override
-    public Loader<String> onCreateLoader(int id, Bundle args) {
-        Loader<String> loader = null;
-        try {
-            // 天気取得APIにアクセスするタスクを開始。
-            loader = new HttpWorker(this, "http://api.openweathermap.org/data/2.5/weather?q=AizuWakamatsu,jp");
-            loader.forceLoad();
-        } catch (MalformedURLException e) {
-            e.printStackTrace();
-        }
+    public Loader<List<Repository>> onCreateLoader(int id, Bundle args) {
+        String userName = usernameEdit.getText().toString();
+        // GitHubAPIにアクセスするタスクを開始。
+        Loader<List<Repository>> loader = new GitHubRepositoryWorker(this, userName);
+        loader.forceLoad();
         return loader;
     }
 
     // Workerが計算結果を通知、それを反映。
     @Override
-    public void onLoadFinished(Loader<String> loader, String data) {
-        String result;
-        try {
-            // Workerが空文字列を返した場合。
-            if (data.isEmpty()) {
-                result = "天気の取得に失敗しました。";
-            } else {
-                // JSONをパースして結果を取得。
-                ObjectMapper mapper = new ObjectMapper();
-                WeatherInfo weatherInfo = mapper.readValue(data, WeatherInfo.class);
-                result = weatherInfo.toString();
-            }
-        } catch (IOException e) {
-            result = "天気の取得に失敗しました。";
-            e.printStackTrace();
+    public void onLoadFinished(Loader<List<Repository>> loader, List<Repository> data) {
+        if (data != null) {
+            RepositoryAdapter adapter = new RepositoryAdapter(MainActivity.this, data);
+            listView.setAdapter(adapter);
         }
-        helloText.setText(result);
     }
 
     @Override
-    public void onLoaderReset(Loader<String> loader) {
+    public void onLoaderReset(Loader<List<Repository>> loader) {
 
     }
 }
