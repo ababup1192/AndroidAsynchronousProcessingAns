@@ -2,20 +2,24 @@ package org.ababup1192.hellothread;
 
 import android.os.Bundle;
 import android.support.v4.app.FragmentActivity;
-import android.support.v4.app.LoaderManager;
-import android.support.v4.content.Loader;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.EditText;
 import android.widget.ListView;
 
+import org.ababup1192.hellothread.github.GitHubService;
 import org.ababup1192.hellothread.github.Repository;
 
 import java.util.List;
 
-// Workerの結果型であるList<Repository>をジェネリクスに指定。
-public class MainActivity extends FragmentActivity implements View.OnClickListener, LoaderManager.LoaderCallbacks<List<Repository>> {
+import retrofit.RestAdapter;
+import rx.Observer;
+import rx.android.schedulers.AndroidSchedulers;
+import rx.schedulers.Schedulers;
+
+public class MainActivity extends FragmentActivity implements View.OnClickListener {
 
     private EditText usernameEdit;
     private ListView listView;
@@ -55,36 +59,40 @@ public class MainActivity extends FragmentActivity implements View.OnClickListen
 
     @Override
     public void onClick(View v) {
-        // ボタンがクリックされたらLoaderManagerがLoaderを初期化する。
         if (v.getId() == R.id.btn_start) {
-            // 以前のTaskを削除する。(何度でも計算できるようにするため)
-            getSupportLoaderManager().destroyLoader(0);
-            getSupportLoaderManager().initLoader(0, null, this);
+            String userName = usernameEdit.getText().toString();
+            RestAdapter restAdapter = new RestAdapter.Builder()
+                    .setEndpoint("https://api.github.com")
+                    .build();
+            restAdapter.create(GitHubService.class).listRepos(userName)
+                    .subscribeOn(Schedulers.newThread())
+                    .observeOn(AndroidSchedulers.mainThread())
+                    .subscribe(new Observer<List<Repository>>() {
+                        @Override
+                        public void onCompleted() {
+                            Log.d("MainActivity", "complete");
+                        }
+
+                        @Override
+                        public void onError(Throwable e) {
+                            Log.d("MainActivity", "error");
+                            e.printStackTrace();
+                        }
+
+                        @Override
+                        public void onNext(List<Repository> repositories) {
+                            if (repositories != null) {
+                                render(repositories);
+                            }
+                        }
+                    });
         }
     }
 
-    // Workerをインスタンス化し、タスクを始める(Load)。
-    @Override
-    public Loader<List<Repository>> onCreateLoader(int id, Bundle args) {
-        String userName = usernameEdit.getText().toString();
-        // GitHubAPIにアクセスするタスクを開始。
-        Loader<List<Repository>> loader = new GitHubRepositoryWorker(this, userName);
-        loader.forceLoad();
-        return loader;
-    }
-
-    // Workerが計算結果を通知、それを反映。
-    @Override
-    public void onLoadFinished(Loader<List<Repository>> loader, List<Repository> data) {
-        if (data != null) {
-            RepositoryAdapter adapter = new RepositoryAdapter(MainActivity.this, data);
-            listView.setAdapter(adapter);
-        }
-    }
-
-    @Override
-    public void onLoaderReset(Loader<List<Repository>> loader) {
-
+    public void render(List<Repository> repositories) {
+        RepositoryAdapter adapter =
+                new RepositoryAdapter(MainActivity.this, repositories);
+        listView.setAdapter(adapter);
     }
 }
 

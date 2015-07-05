@@ -6,10 +6,8 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.BaseAdapter;
 import android.widget.TextView;
-
-import org.ababup1192.hellothread.github.Repository;
-
 import java.util.List;
+import org.ababup1192.hellothread.github.Repository;
 
 public class RepositoryAdapter extends BaseAdapter {
     private LayoutInflater layoutInflater = null;
